@@ -12,7 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('donations', function (Blueprint $table) {
-            $table->id();
+            $table->increments('id');
+            $table->integer('user_id')->unsigned();
+            $table->integer('institution_id')->unsigned();
+            $table->decimal('value', 10, 2);
+
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('institution_id')->references('id')->on('financial_institutions')->onDelete('cascade');
+
             $table->timestamps();
         });
     }

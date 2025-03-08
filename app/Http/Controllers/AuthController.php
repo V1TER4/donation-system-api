@@ -2,55 +2,93 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use DB;
+use Validator;
 use App\Models\User;
+use Firebase\JWT\JWT;
+use Illuminate\Http\Request;
+use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Validator;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
     public function register(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed',
-        ]);
+        try {
+            DB::beginTransaction();
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users',
+                'password' => 'required|string|min:6|confirmed',
+            ]);
+    
+            if ($validator->fails()) {
+                return response()->json($validator->errors(), 400);
+            }
+    
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
+    
+            $token = JWTAuth::fromUser($user);
+    
+            DB::commit();
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 400);
+            return response()->json(compact('user', 'token'), 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::info($e->getMessage());
+            return response()->json(['error' => 'Erro ao cadastrar usuário'], 500);
         }
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
-        $token = JWTAuth::fromUser($user);
-
-        return response()->json(compact('user', 'token'), 201);
     }
 
     public function login(Request $request)
     {
-        $credentials = $request->only('email', 'password');
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|string|email',
+                'password' => 'required|string|min:6',
+            ]);
 
-        if (!$token = Auth::attempt($credentials)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+            if ($validator->fails()) {
+                return response()->json($validator->errors(), 400);
+            }
+            $credentials = $request->only('email', 'password');
+        
+            // if (!$token = JWTAuth::attempt($credentials)) {
+            //     return response()->json(['error' => 'Unauthorized'], 401);
+            // }
+        
+            $user = User::where('email', $request->email)->first();
+            if (!$user || !Hash::check($request->password, $user->password)) {
+                return response()->json(['error' => 'Usuario / Senha invalido(s)'], 401);
+            }
+            $api_token = $this->jwt($user);
+            $user->api_token = $api_token;
+            $user->save();
+        
+            return response()->json(['data' => $user, 'token' => $api_token]);
+        } catch (\Exception $e) {
+            \Log::info($e->getMessage());
+            return response()->json(['error' => 'Erro ao logar'], 500);
         }
-
-        return $this->respondWithToken($token);
     }
 
-    protected function respondWithToken($token)
+    protected function jwt($user)
     {
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => Auth::factory()->getTTL() * 60
-        ]);
+        $time = (int) env('JWT_EXPIRED_TIME', 10);
+
+        $payload = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'iat' => time(),
+            'exp' => time() + $time
+        ];
+
+        return JWT::encode($payload, env('JWT_SECRET'), 'HS256');
     }
 }
