@@ -21,7 +21,16 @@ class AuthController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users',
                 'password' => 'required|string|min:6|confirmed',
+            ], [
+                'name.required' => 'O campo usuário é obrigatório.',
+                'email.required' => 'O campo email é obrigatório.',
+                'email.exists' => 'A instituição financeira informada não existe.',
+                'password.required' => 'O campo senha é obrigatório.',
+                'password.confirmed' => 'As senhas não coincidem.',
+                'password.min' => 'A senha deve ter no mínimo 6 caracteres.',
+                'password_confirmation.required' => 'É necessário confirmar a senha.',
             ]);
+
     
             if ($validator->fails()) {
                 return response()->json($validator->errors(), 400);
