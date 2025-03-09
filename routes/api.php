@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\UserFavoriteController;
+use App\Http\Controllers\InstitutionController;
 
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
@@ -15,7 +16,8 @@ Route::middleware('auth.token')->group(function () {
     Route::get('user', [AuthController::class, 'user']);
 
     Route::prefix('donation')->group(function () {
-        Route::get('/', [DonationController::class, 'index']);
+        Route::get('/index/{id}', [DonationController::class, 'index']);
+        Route::get('/', [DonationController::class, 'list']);
         Route::post('/', [DonationController::class, 'store']);
         Route::get('/{id}', [DonationController::class, 'show']);
     });
@@ -25,6 +27,10 @@ Route::middleware('auth.token')->group(function () {
         Route::post('/', [UserFavoriteController::class, 'store']);
         Route::put('/{id}', [UserFavoriteController::class, 'update']);
         Route::delete('/{id}', [UserFavoriteController::class, 'destroy']);
+    });
+
+    Route::prefix('institutions')->group(function () {
+        Route::get('/', [InstitutionController::class, 'list']);
     });
 
     Route::get('health', function () {

@@ -10,8 +10,8 @@ class UserFavoriteController extends Controller
 {
     public function find($id)
     {
-        $favorite = UserIntitutionsFavorite::where('user_id', $id)->get();
-        return response()->json(['message' => 'Success', 'data' => $favorite, 'count' => $favorite->count()], 200);
+        $favorite = UserIntitutionsFavorite::with('financial_institution')->where('user_id', $id)->first();
+        return response()->json(['message' => 'Success', 'data' => $favorite], 200);
     }
 
     public function store(Request $request)

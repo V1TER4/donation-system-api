@@ -11,13 +11,11 @@ class Donation extends Model
         'user_id', 'institution_id', 'value'
     ];
 
-    public function user()
-    {
+    public function user(){
         return $this->belongsTo(User::class);
     }
 
-    public function financial_institution()
-    {
+    public function financial_institution(){
         return $this->belongsTo(FinancialInstitution::class, 'institution_id');
     }
 }
