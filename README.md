@@ -3,7 +3,7 @@
 ## Passo 1: Clonar o repositório
 Faça o clone do repositório do projeto:
 ```sh
-git clone <URL_DO_REPOSITORIO>
+git clone https://github.com/V1TER4/donation-system-api.git
 cd donation-system-api
 ```
 
