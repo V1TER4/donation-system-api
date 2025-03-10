@@ -14,13 +14,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        // User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
-
-        FinancialInstitution::factory()->count(5)->create();
+        if (FinancialInstitution::count() === 0) {
+            FinancialInstitution::factory()->count(5)->create();
+        }
     }
 }
