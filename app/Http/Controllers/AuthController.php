@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Jobs\SendRegistrationEmail ;
 
 class AuthController extends Controller
 {
@@ -30,10 +31,9 @@ class AuthController extends Controller
                 'password.min' => 'A senha deve ter no mínimo 6 caracteres.',
                 'password_confirmation.required' => 'É necessário confirmar a senha.',
             ]);
-
     
             if ($validator->fails()) {
-                return response()->json($validator->errors(), 400);
+                return response()->json(['data' => null, 'message' => $validator->errors()], 400);
             }
     
             $user = User::create([
@@ -43,9 +43,9 @@ class AuthController extends Controller
             ]);
     
             $token = JWTAuth::fromUser($user);
-    
+            SendRegistrationEmail::dispatch($user);
+                
             DB::commit();
-
             return response()->json(compact('user', 'token'), 201);
         } catch (\Exception $e) {
             DB::rollBack();

@@ -62,16 +62,10 @@ class DonationController extends Controller
             $user = User::findOrFail($data['user_id']);
             $financial_institution = FinancialInstitution::findOrFail($data['institution_id']);
 
-            $existingDonation = Donation::where('user_id', $data['user_id'])
-                                        ->where('institution_id', $data['institution_id'])
-                                        ->whereBetween('created_at', [
-                                            \Carbon\Carbon::today()->startOfDay(),
-                                            \Carbon\Carbon::today()->endOfDay()
-                                        ])
-                                        ->first();
+            $existingDonation = Donation::where('user_id', $data['user_id'])->first();
             if ($existingDonation) {
                 DB::rollBack();
-                return response()->json(['message' => 'Usuário já fez uma doação hoje.'], 400);
+                return response()->json(['message' => 'Usuário já fez uma doação.'], 400);
             }
 
             $donation = Donation::create($data);
